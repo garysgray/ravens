@@ -1,0 +1,218 @@
+/* =============================================================================
+   THE RAVENS - MASTER STYLESHEET
+=============================================================================
+   STACKING ORDER (Z-INDEX GUIDE):
+   0-3   : Background (Sky, Ground, Silhouettes)
+   4-7   : Entities (Birds/Ravens)
+   8-82  : Atmosphere (Dust, Vignette, CRT Effects)
+   90    : Interface (HUD/Buttons)
+   99    : Interaction Overlay (The Circles Canvas)
+=============================================================================
+*/
+
+:root {
+    /* Theme Colors: Dark Gothic Palette */
+    --sky-top:     #0a0a14;
+    --sky-mid:     #1a1a2e;
+    --sky-hor:     #2d1b0e;
+    --gold-mute:   rgba(180, 140, 80, 0.7);  /* For labels and borders */
+    --gold-bright: #e8d8b0;                 /* For main titles */
+    
+    /* Global Effects */
+    --blur-heavy:  20px;                     /* HUD Glass blur */
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- 1. GLOBAL RESET ---
+   Prevents unwanted spacing and ensures full-screen coverage.
+*/
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    background: #050508;
+    overflow: hidden; /* Important: Prevents scrollbars from breaking the layout */
+    cursor: crosshair;
+}
+
+/* --- 2. INTERACTIVE OVERLAY (CIRCLES) ---
+   This must stay at the top (Z-99) to be visible.
+   Note: 'pointer-events: none' allows you to click the HUD through this layer.
+*/
+#raven-circles-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99; 
+    display: block;
+    pointer-events: none; 
+}
+
+/* --- 3. ENVIRONMENT & BACKGROUND ---
+   Deepest layers that form the world.
+*/
+#sky-canvas, #scene-bg, #house-layer, #tree-layer {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+}
+
+#sky-canvas   { z-index: 0; }
+#scene-bg     { z-index: 1; background: linear-gradient(to bottom, transparent 55%, rgba(4,3,2,0.7) 75%, rgba(4,3,2,0.95) 100%); }
+
+/* Silhouettes: Fixed to bottom, heights vary for depth */
+#house-layer  { z-index: 2; height: 60vh; bottom: 0; top: auto; }
+#tree-layer   { z-index: 3; height: 75vh; bottom: 0; top: auto; }
+
+/* --- 4. BIRD/RAVEN LAYERS ---
+   Separated so they can move at different parallax speeds in JS.
+*/
+#ravens-far, #ravens-mid, #ravens-close, #raven-side-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none; /* Prevents birds from blocking mouse clicks */
+}
+
+#ravens-far         { z-index: 4; }
+#ravens-mid         { z-index: 5; }
+#ravens-close       { z-index: 6; }
+#raven-side-canvas  { z-index: 7; }
+
+/* --- 5. ATMOSPHERIC FILTERS ---
+   Post-processing effects that sit 'on top' of the world like a camera lens.
+*/
+#dust, #vignette, #scanlines, #noise {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+}
+
+#dust {
+    z-index: 8;
+    background: radial-gradient(ellipse 120% 40% at 50% 65%, rgba(180, 140, 90, 0.07) 0%, transparent 70%);
+    animation: dust-pulse 12s ease-in-out infinite alternate;
+}
+
+#vignette  { z-index: 80; background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.97) 100%); }
+#scanlines { z-index: 81; background: repeating-linear-gradient(to bottom, transparent 0px, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px); }
+#noise     { z-index: 82; }
+
+/* --- 6. NARRATIVE TEXT ---
+   The story text. Positioned in the top-left area.
+*/
+.text-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 20; /* High enough to see clearly over the silhouettes */
+    display: flex;
+    padding: 8vh 0 0 6vw;
+    pointer-events: none;
+}
+
+.title-block { 
+    animation: title-in 3s cubic-bezier(0.16, 1, 0.3, 1) both; 
+}
+
+/* Typography scales automatically based on screen size via clamp() */
+.eyebrow {
+    font-family: 'Crimson Text', serif;
+    font-size: clamp(13px, 1.4vw, 18px);
+    color: var(--gold-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+}
+
+.main-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(48px, 8vw, 110px);
+    color: var(--gold-bright);
+    text-shadow: 0 0 60px rgba(180, 120, 40, 0.3);
+}
+
+/* --- 7. USER INTERFACE (HUD) ---
+   The interactive control panel at the bottom center.
+*/
+.HUD {
+    position: fixed;
+    bottom: 28px; 
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 90; /* Must be high to ensure buttons are clickable */
+    display: flex;
+    align-items: center;
+    background: rgba(6, 4, 3, 0.88);
+    border: 1px solid rgba(180, 140, 80, 0.12);
+    border-radius: 6px;
+    padding: 10px 16px;
+    backdrop-filter: blur(var(--blur-heavy)); /* Glassmorphism effect */
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+}
+
+.HUD button {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    padding: 5px 11px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(180, 140, 80, 0.1);
+    color: rgba(220, 200, 160, 0.3);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+/* Button hover/active states */
+.HUD button:hover {
+    border-color: rgba(180, 140, 80, 0.3);
+    color: rgba(220, 200, 160, 0.85);
+}
+
+.HUD button.active-gold {
+    background: rgba(180, 130, 30, 0.18);
+    border-color: rgba(200, 160, 60, 0.55);
+    color: #d4a83a;
+}
+
+/* --- 8. MOBILE ADAPTATION ---
+   Adjusts the HUD for vertical portrait screens.
+*/
+@media (max-width: 640px) {
+    .HUD { 
+        flex-direction: column; 
+        width: calc(100vw - 28px); 
+        gap: 8px; 
+    }
+    .hud-divider { 
+        width: 100%; 
+        height: 1px; 
+        background: linear-gradient(to right, transparent, rgba(180,140,80,0.12) 50%, transparent);
+    }
+    .control-group { 
+        width: 100%; 
+        flex-direction: row; 
+        justify-content: space-between; 
+    }
+}
+
+/* --- 9. KEYFRAME ANIMATIONS --- */
+@keyframes dust-pulse {
+    from { opacity: 0.6; transform: scale(1); }
+    to   { opacity: 1.0; transform: scale(1.04); }
+}
+
+@keyframes title-in {
+    from { opacity: 0; transform: translateY(20px); filter: blur(6px); }
+    to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+}

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Text:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<title>The General's House</title>
+</head>
+<body>
+
+  <!-- Sky layers -->
+  <canvas id="sky-canvas"></canvas>
+
+  <!-- Scene layers -->
+  <div id="scene-bg"></div>
+  <div id="house-layer"></div>
+  <div id="tree-layer"></div>
+
+  <!-- Raven circles — orbiting rings behind flying ravens -->
+  <canvas id="raven-circles-canvas"></canvas>
+
+  <!-- Raven canvas layers -->
+  <canvas id="ravens-far"></canvas>
+  <canvas id="ravens-mid"></canvas>
+  <canvas id="ravens-close"></canvas>
+  <!-- Side-view ravens flying past viewer -->
+  <canvas id="raven-side-canvas"></canvas>
+
+  <!-- Atmosphere -->
+  <div id="dust"></div>
+  <div id="vignette"></div>
+  <div id="scanlines"></div>
+  <canvas id="noise"></canvas>
+
+  
+
+  <!-- HUD -->
+  <nav class="HUD" role="complementary" aria-label="Scene controls">
+    <div class="control-group">
+      <span class="control-label">Flock Density</span>
+      <div class="btn-row" role="group">
+        <button id="sparse" class="active-gold">Sparse</button>
+        <button id="flock"  aria-pressed="false">Flock</button>
+        <button id="swarm" aria-pressed="false">Swarm</button>
+      </div>
+    </div>
+    <div class="hud-divider"></div>
+    <div class="control-group">
+      <span class="control-label">Time of Day</span>
+      <div class="btn-row" role="group">
+        <button id="dawn"    class="active-gold">Dawn</button>
+        <button id="midday"  aria-pressed="false">Midday</button>
+        <button id="dusk"    aria-pressed="false">Dusk</button>
+      </div>
+    </div>
+    <div class="hud-divider"></div>
+    <div class="control-group">
+      <span class="control-label">Sound</span>
+      <div class="btn-row">
+        <button id="sound-toggle">Enable Audio</button>
+      </div>
+    </div>
+  </nav>
+
+  
+  
+<script src="js/core/config.js"></script>
+
+<script src="js/render/BaseRenderer.js"></script>
+
+<script src="js/render/SkyBackground.js"></script>
+<script src="js/render/StarField.js"></script>
+<script src="js/render/CloudSystem.js"></script>
+<script src="js/render/hill.js"></script>
+<script src="js/render/house.js"></script>
+<script src="js/render/trees.js"></script>
+<script src="js/render/mountains.js"></script>
+<script src="js/render/ravens.js"></script>
+<script src="js/render/ravenCircles.js"></script>
+<script src="js/render/ravenSide.js"></script>
+<script src="js/render/PerchedRaven.js"></script>
+
+<script src="js/utils/audio.js"></script>
+<script src="js/utils/hud.js"></script>
+<script src="js/core/scene.js"></script>
+<script src="js/core/controller.js"></script>
+
+<script src="js/main.js"></script>
+  
+  
+</body>
+</html>
