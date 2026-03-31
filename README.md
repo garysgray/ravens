@@ -1,4 +1,4 @@
-![Game Splash](ravens/images/the_ravens.png)
+![Game Splash](images/the_ravens.png)
 # The Ravens: Atmospheric Visualization Architecture
 
 A high-fidelity web application utilizing a multi-layered CSS rendering stack, real-time canvas overlays, and an integrated post-processing pipeline.
