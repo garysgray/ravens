@@ -43,6 +43,3 @@ The visual theme is managed via CSS Custom Properties located in the `:root` sel
 * `--gold-bright`: The primary highlight and text-glow color.
 * `--blur-heavy`: Controls the backdrop-filter intensity for the HUD.
 
----
-*Original Prompt Reference:*
-> do you think you coul dmake a README in .md format for my github page based on what we have put togeter and what you seen for this
