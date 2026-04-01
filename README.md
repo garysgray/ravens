@@ -1,5 +1,3 @@
-![Game Splash](images/the_ravens.png)
-
 # The Ravens: Atmospheric Visualization Architecture
 
 A high-fidelity web application utilizing a multi-layered CSS rendering stack, real-time canvas overlays, and an integrated post-processing pipeline.
@@ -7,6 +5,54 @@ A high-fidelity web application utilizing a multi-layered CSS rendering stack, r
 ## Technical Overview
 
 The core of this application is a "Deep-Stack" layering system. By isolating environmental elements, entities, and UI across a 100-point Z-index scale, the application achieves a distinct sense of parallax depth while maintaining interactive performance.
+
+## File Structure
+
+```
+│   index.html
+│
+├───css
+│       style.css
+│
+├───images
+│       the_ravens.png
+│
+├───js
+│   │   main.js
+│   │
+│   ├───core
+│   │       config.js
+│   │       controller.js
+│   │       scene.js
+│   │
+│   ├───render
+│   │   │   baseRenderer.js
+│   │   │
+│   │   ├───ground
+│   │   │       hill.js
+│   │   │       mountains.js
+│   │   │       trees.js
+│   │   │
+│   │   ├───house
+│   │   │       house.js
+│   │   │       road.js
+│   │   │
+│   │   ├───ravens
+│   │   │       circleRaven.js
+│   │   │       perchedRaven.js
+│   │   │       ravenCircles.js
+│   │   │       ravens.js
+│   │   │       ravenSide.js
+│   │   │
+│   │   └───sky
+│   │           cloudSystem.js
+│   │           skyBackGround.js
+│   │           starField.js
+│   │
+│   └───utils
+│           audio.js
+│           hud.js
+```
 
 ## Key Technical Implementation
 
@@ -54,48 +100,3 @@ Canvas gradients are expensive to create. All static or semi-static gradients ar
 ## Installation
 1. Clone the repository.
 2. Serve the directory via a local server or open `index.html` directly in a browser.
-
-
-│   index.html
-│
-├───css
-│       style.css
-│
-├───images
-│       the_ravens.png
-│
-├───js
-│   │   main.js
-│   │
-│   ├───core
-│   │       config.js
-│   │       controller.js
-│   │       scene.js
-│   │
-│   ├───render
-│   │   │   baseRenderer.js
-│   │   │
-│   │   ├───ground
-│   │   │       hill.js
-│   │   │       mountains.js
-│   │   │       trees.js
-│   │   │
-│   │   ├───house
-│   │   │       house.js
-│   │   │       road.js
-│   │   │
-│   │   ├───ravens
-│   │   │       circleRaven.js
-│   │   │       perchedRaven.js
-│   │   │       ravenCircles.js
-│   │   │       ravens.js
-│   │   │       ravenSide.js
-│   │   │
-│   │   └───sky
-│   │           cloudSystem.js
-│   │           skyBackGround.js
-│   │           starField.js
-│   │
-│   └───utils
-│           audio.js
-│           hud.js
