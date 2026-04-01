@@ -1,92 +1,93 @@
+
 // ─── Raven Constants ─────────────────────────────────────────────────────────
+// Global shared configuration for raven shape, motion, and visual tuning.
+// These values are referenced across ALL raven renderers.
 const RAVEN_CONST =
 {
-
-  // Spawn / movement
+  // Spawn / movement behavior
   spawn:
   {
-    yMin: 0.2,
-    yRange: 0.45,
-    offscreenMult: 6,
-    spawnOffset: 4,
+    yMin: 0.2,        // lowest spawn height (% of screen)
+    yRange: 0.45,     // vertical spawn randomness range
+    offscreenMult: 6, // how far offscreen before respawn triggers
+    spawnOffset: 4,   // how far outside screen ravens spawn
   },
 
-  // Wing animation
+  // Wing animation speed control
   wing:
   {
-    speedMin: 0.004,
-    speedRange: 0.008,
+    speedMin: 0.000004, // slowest flap speed
+    speedRange: 0.0008,  // randomness range added to flap speed
   },
 
-  // Visual randomness
+  // Visual randomness (opacity + depth layering feel)
   visual:
   {
     alphaMin: 0.72,
-    alphaRange: 0.25,
-    depthMin: 0.4,
+    alphaRange: 0.95,
+    depthMin: 0.9,
     depthRange: 0.6,
   },
 
-  // Shape (normalized to size)
-  // Shape (normalized to size)
+  // ── BODY SHAPE (normalized, scaled by size "s") ──
   body:
   {
-    noseX: -2.8,
-    midTopY: -0.4,
+    noseX: -3.0,
+    midTopY: -0.6,
     midBotY:  0.8,
-    tailX:  2.4,
+    tailX:  2.2,
   },
 
+  // ── HEAD SHAPE ──
   head:
   {
-    x: -2.2,
-    y: -0.1,  
-    rx: 0.70,
-    ry: 0.50,
-    rot: 0,   
+    x:  -2.4,
+    y:  -0.2,
+    rx:  0.6,
+    ry:  0.45,
+    rot: 0,
   },
 
-  // FIX: Redefined beak coordinates for a curved, hooked shape
+  // ── BEAK SHAPE (quadratic curve definition) ──
   beak:
   {
-    x1: -2.6, // Base top (where it meets the head)
-    y1: -0.3, // Higher base start for a thicker look
-    
-    x2: -3.8, // Pushed further out for length (was -3.3)
-    y2:  0.1, // Dropped down for the hook effect (was -0.1)
-    
-    ctrlX: -3.3, // Control point to pull the curve up before dropping to the hook
-    ctrlY: -0.4,
-    
-    x3: -2.3, // Base bottom
-    y3:  0.2, // Lower base end to make the beak thick at the throat
+    x1: -2.6, y1: -0.2,
+    x2: -4.2, y2:  0.2,
+    ctrlX: -3.6, ctrlY: -0.5,
+    x3: -2.5, y3:  0.15,
   },
 
-  // Add these to RAVEN_CONST
-  wingShape: {
-    shoulderX: -1.1,
-    shoulderY: -0.2,
-    tipX: 1.4,   // Pushed out for longer primary feathers
+  // ── WING SHAPE ──
+  wingShape:
+  {
+    shoulderX: -1.0,
+    shoulderY: -0.1,
+    tipX: 1.8,
     baseX: -0.4,
     baseY: 0.3,
   },
 
-  tail: {
-    x: 2.4,      // Start of tail
-    length: 1.2, // How far it extends
-    width: 0.8,  // Spread of the fan
-    count: 5,    // Number of tail feathers/notches
+  // ── TAIL SHAPE ──
+  tail:
+  {
+    x: 2.2,
+    length: 2.0,
+    width: 0.6,
+    count: 3,
   },
 
-  feathers: {
-    wingCount: 17, // Number of trailing edge feathers
-    spread: 0.6,  // How "ragged" the wing looks
+  // ── FEATHER SYSTEM ──
+  feathers:
+  {
+    wingCount: 9,
+    spread: 1.6,
   }
-
-  
 };
 
+
 // ─── RavenSideRenderer ───────────────────────────────────────────────────────
+// Renders stylized side-view ravens using procedural animation.
+// Handles spawn, motion, wing flapping, and full shape drawing.
 class RavenSideRenderer extends BaseRenderer
 {
   constructor()
@@ -99,7 +100,7 @@ class RavenSideRenderer extends BaseRenderer
       maxSpeed: 2.2,
       minSize: 8,
       maxSize: 22,
-      wingStrength: 1.6, 
+      wingStrength: 1.6,
       waveDrift: 18,
       waveSpeed: 0.012,
     });
@@ -109,8 +110,12 @@ class RavenSideRenderer extends BaseRenderer
     this.initialized = false;
   }
 
-  setTime(id) { this.time = id; }
+  setTime(id)
+  {
+    this.time = id;
+  }
 
+  // Creates initial raven population
   _initRavens(W, H)
   {
     for (let i = 0; i < this.cfg.count; i++)
@@ -120,56 +125,71 @@ class RavenSideRenderer extends BaseRenderer
     this.initialized = true;
   }
 
+  // Creates a single raven instance with randomized properties
   _createRaven(W, H, randomX)
   {
     const c = this.cfg;
     const K = RAVEN_CONST;
+
     const goingRight = Math.random() < 0.5;
+
     const size  = c.minSize  + Math.random() * (c.maxSize  - c.minSize);
     const speed = c.minSpeed + Math.random() * (c.maxSpeed - c.minSpeed);
+
     const baseY = (K.spawn.yMin + Math.random() * K.spawn.yRange) * H;
 
     return {
       x: randomX
         ? Math.random() * W
-        : (goingRight ? -size * K.spawn.spawnOffset : W + size * K.spawn.spawnOffset),
+        : (goingRight
+            ? -size * K.spawn.spawnOffset
+            : W + size * K.spawn.spawnOffset),
+
       y: baseY,
       baseY: baseY,
+
       vx: goingRight ? speed : -speed,
+
       size,
       goingRight,
+
       wingPhase: Math.random() * Math.PI * 2,
       wingSpeed: K.wing.speedMin + Math.random() * K.wing.speedRange,
+
       wavePhase: Math.random() * Math.PI * 2,
+
       alpha: K.visual.alphaMin + Math.random() * K.visual.alphaRange,
       depth: K.visual.depthMin + Math.random() * K.visual.depthRange,
     };
   }
 
-  // NEW: Update logic moved out of draw
+  // Main update loop (physics + animation)
   update(dt)
   {
     if (!dt) return;
+
     const W = window.innerWidth;
     const H = window.innerHeight;
-    
+
     if (!this.initialized) this._initRavens(W, H);
 
-    // Standard multiplier for ~60fps feel
     const m = dt * 0.06;
     const c = this.cfg;
     const K = RAVEN_CONST;
 
     this.ravens.forEach((r, i) =>
     {
-      // Apply movement scaled by DT
+      // horizontal motion
       r.x += r.vx * m;
-      r.wingPhase += r.wingSpeed * m * 16.6; // Multiplied to keep original small constant feel
+
+      // animation phases
+      r.wingPhase += r.wingSpeed * m * 16.6;
       r.wavePhase += c.waveSpeed * m;
 
+      // vertical wave motion
       r.y = r.baseY + Math.sin(r.wavePhase) * c.waveDrift;
 
-      // Respawn logic
+      // respawn check (offscreen kill + replace)
       if (
         (r.vx > 0 && r.x > W + r.size * K.spawn.offscreenMult) ||
         (r.vx < 0 && r.x < -r.size * K.spawn.offscreenMult)
@@ -180,107 +200,132 @@ class RavenSideRenderer extends BaseRenderer
     });
   }
 
+  // Draw all ravens
   draw(ctx, W, H, t)
   {
-    // 1. Safety check - if t (theme) is missing, don't draw
     if (!t || !this.initialized) return;
 
     this.ravens.forEach((r) =>
     {
       ctx.save();
-      
-      // 2. Alpha/Depth
+
       ctx.globalAlpha = r.alpha * r.depth;
 
-      // 3. POSITION: Use r.x and r.y exactly as they are updated in your loop
-      // Don't multiply them by W or H here if they are already pixels
       ctx.translate(r.x, r.y);
 
-      // 4. DIRECTION
+      // flip direction for right-moving ravens
       if (r.goingRight) ctx.scale(-1, 1);
 
-      // 5. SHAPE SIZE: 
-      // If the screen is black, r.size is likely already a pixel value (e.g. 15-30).
-      // DO NOT multiply it by 'baseDim' if it's already a pixel value.
-      // Just pass r.size directly to the renderer.
       this._renderShape(ctx, r.size, r.wingPhase, t.ravenClose || '#333');
-      
+
       ctx.restore();
     });
   }
 
+  // ─── Core procedural raven drawing ───
   _renderShape(ctx, s, wingPhase, color)
-{
-  const K = RAVEN_CONST;
-  const c = this.cfg;
-
-  const beat = Math.sin(wingPhase);
-  const wingY = beat * s * c.wingStrength;
-
-  ctx.fillStyle = color;
-
-  // ── BODY (forward aggressive lean)
-  ctx.beginPath();
-  ctx.moveTo(-3.0 * s, 0);
-  ctx.bezierCurveTo(-1.5 * s, -0.6 * s, 1.2 * s, -0.4 * s, 2.2 * s, 0);
-  ctx.bezierCurveTo(1.2 * s, 0.4 * s, -1.8 * s, 0.8 * s, -3.0 * s, 0);
-  ctx.fill();
-
-  // ── HEAD (pushed forward)
-  ctx.beginPath();
-  ctx.ellipse(-2.4 * s, -0.2 * s, 0.6 * s, 0.45 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // ── BEAK (sharp hooked)
-  ctx.beginPath();
-  ctx.moveTo(-2.6 * s, -0.2 * s);
-  ctx.quadraticCurveTo(-3.6 * s, -0.5 * s, -4.2 * s, 0.2 * s);
-  ctx.lineTo(-2.5 * s, 0.15 * s);
-  ctx.fill();
-
-  // ── WING (LONG + FINGERED LIKE IMAGE)
-  ctx.beginPath();
-
-  const shX = -1.0 * s;
-  const shY = -0.1 * s;
-
-  ctx.moveTo(shX, shY);
-
-  const tipX = 1.8 * s;
-  const tipY = wingY;
-
-  // leading edge (clean sweep)
-  ctx.quadraticCurveTo(0.2 * s, -0.8 * s + wingY * 0.5, tipX, tipY);
-
-  // trailing feathers (sharp fingers)
-  const featherCount = 9;
-  for (let i = 0; i < featherCount; i++)
   {
-    const t = i / (featherCount - 1);
+    const K = RAVEN_CONST;
+    const c = this.cfg;
 
-    const fx = tipX - t * (tipX + 0.4 * s);
+    const beat = Math.sin(wingPhase);
+    const wingY = beat * s * c.wingStrength;
 
-    // THIS is the key: sharp downward spikes like your image
-    const fy =
-      tipY +
-      t * (1.6 * s) +
-      Math.sin(i * 1.7) * 0.15 * s;
+    ctx.fillStyle = color;
 
-    ctx.lineTo(fx, fy);
+    // ── BODY ──
+    const B = K.body;
+
+    ctx.beginPath();
+    ctx.moveTo(B.noseX * s, 0);
+
+    ctx.bezierCurveTo(
+      B.noseX * 0.5 * s, B.midTopY * s,
+      B.tailX * 0.5 * s, B.midTopY * 0.6 * s,
+      B.tailX * s, 0
+    );
+
+    ctx.bezierCurveTo(
+      B.tailX * 0.5 * s, B.midBotY * s,
+      B.noseX * 0.6 * s, B.midBotY * s,
+      B.noseX * s, 0
+    );
+
+    ctx.fill();
+
+    // ── HEAD ──
+    const H = K.head;
+
+    ctx.beginPath();
+    ctx.ellipse(H.x * s, H.y * s, H.rx * s, H.ry * s, H.rot, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ── BEAK ──
+    const Be = K.beak;
+
+    ctx.beginPath();
+    ctx.moveTo(Be.x1 * s, Be.y1 * s);
+    ctx.quadraticCurveTo(Be.ctrlX * s, Be.ctrlY * s, Be.x2 * s, Be.y2 * s);
+    ctx.lineTo(Be.x3 * s, Be.y3 * s);
+    ctx.fill();
+
+    // ── WING ──
+    const W = K.wingShape;
+    const F = K.feathers;
+
+    ctx.beginPath();
+
+    const shX = W.shoulderX * s;
+    const shY = W.shoulderY * s;
+
+    ctx.moveTo(shX, shY);
+
+    const tipX = W.tipX * s;
+    const tipY = wingY;
+
+    ctx.quadraticCurveTo(
+      (shX + tipX) * 0.5,
+      shY - s + wingY * 0.5,
+      tipX,
+      tipY
+    );
+
+    for (let i = 0; i < F.wingCount; i++)
+    {
+      const t = i / (F.wingCount - 1);
+
+      const fx = tipX - t * (tipX - W.baseX * s);
+
+      const fy =
+        tipY +
+        t * (F.spread * s) +
+        Math.sin(i * 1.7) * 0.15 * s;
+
+      ctx.lineTo(fx, fy);
+    }
+
+    ctx.lineTo(shX, shY);
+    ctx.fill();
+
+    // ── TAIL ──
+    const T = K.tail;
+
+    ctx.beginPath();
+
+    const baseX = T.x * s;
+    ctx.moveTo(baseX, 0);
+
+    for (let i = 0; i < T.count; i++)
+    {
+      const t = i / (T.count - 1);
+
+      const tx = baseX + T.length * s;
+      const ty = (t - 0.5) * T.width * s * 2;
+
+      ctx.lineTo(tx, ty);
+    }
+
+    ctx.closePath();
+    ctx.fill();
   }
-
-  ctx.lineTo(shX, shY);
-  ctx.fill();
-
-  // ── TAIL (sharp wedge)
-  ctx.beginPath();
-  ctx.moveTo(2.2 * s, 0);
-
-  ctx.lineTo(3.8 * s, -0.6 * s);
-  ctx.lineTo(4.2 * s, 0);
-  ctx.lineTo(3.8 * s, 0.6 * s);
-
-  ctx.closePath();
-  ctx.fill();
-}
 }
