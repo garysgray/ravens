@@ -115,6 +115,12 @@ class RavenSideRenderer extends BaseRenderer
     this.time = id;
   }
 
+  _resize(W, H)
+  {
+    this.W = W;
+    this.H = H;
+  }
+
   // Creates initial raven population
   _initRavens(W, H)
   {
@@ -168,8 +174,8 @@ class RavenSideRenderer extends BaseRenderer
   {
     if (!dt) return;
 
-    const W = window.innerWidth;
-    const H = window.innerHeight;
+    const W = this.W || window.innerWidth;
+    const H = this.H || window.innerHeight;
 
     if (!this.initialized) this._initRavens(W, H);
 

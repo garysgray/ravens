@@ -40,6 +40,8 @@ class RavenCircles extends BaseRenderer
     this.rings.forEach(ring => 
     {
       ring._angle = 0;
+      ring._ca = Math.cos(ring.tiltAxis || 0);  // set once here
+      ring._sa = Math.sin(ring.tiltAxis || 0);  // set once here
       ring.birdInstances = Array.from({ length: ring.count }, (_, i) => 
       {
         return new CircleRaven(i, ring.count, ring, ring.birds[i] || {});
@@ -110,8 +112,8 @@ class RavenCircles extends BaseRenderer
       const tilt = ring.tilt || 0;
       const axis = ring.tiltAxis || 0;
       const scaleFlat = 1 - tilt;
-      const ca = Math.cos(axis);
-      const sa = Math.sin(axis);
+      const ca = ring._ca;
+      const sa = ring._sa;
 
       ring.birdInstances.forEach((bird, i) => 
       {

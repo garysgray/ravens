@@ -34,10 +34,7 @@ class PerchedRaven extends BaseRenderer
     // - deterministic per tree
     // - avoids repeating 50/50 patterns
     // - still stable across frames
-    const side =
-      K.BIRD_DIR_OVERRIDE !== null
-        ? K.BIRD_DIR_OVERRIDE
-        : (Math.sin(tree.seed * 999) > 0 ? 1 : -1);
+    const side = K.BIRD_DIR_OVERRIDE !== null ? K.BIRD_DIR_OVERRIDE : tree.side;
 
     // ─────────────────────────────────────────────
     // POSITION (anchored to tree)

@@ -20,6 +20,7 @@ class CloudSystem extends BaseRenderer
     // ── COLOR + ALPHA
     const cloudCol   = K.CLOUD_COLOR_OVERRIDE || t.skyGlow;
     const cloudAlpha = K.CLOUD_ALPHA * K.CLOUD_OPACITY_SCALE;
+    const cloudStyle = this._alpha(cloudCol, cloudAlpha);
 
     const s = Math.min(W, H); // base scale
     const timestamp = this.phase * K.CLOUD_PHASE_SCALE; // movement driver
@@ -54,7 +55,7 @@ class CloudSystem extends BaseRenderer
       ctx.save();
       ctx.translate(x, y);
 
-      ctx.fillStyle = this._alpha(cloudCol, cloudAlpha);
+      ctx.fillStyle = cloudStyle;
 
       // ── PUFFS (the actual cloud shape)
       for (let p = 0; p < K.CLOUD_PUFF_COUNT; p++) 

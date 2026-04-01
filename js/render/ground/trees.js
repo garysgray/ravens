@@ -101,6 +101,11 @@ class TreeRenderer extends BaseRenderer
 
     // Global animation timer used for sway + organic motion
     this.time = 0;
+
+    this.time = 0;
+    this._lastT      = null;
+    this._trunkGrads = []; // one per tree
+    this._blobGrads  = []; // not cacheable — positions change with sway
   }
 
   // Advance animation
@@ -122,7 +127,26 @@ class TreeRenderer extends BaseRenderer
       tw: s * cfg.twMul,
       seed: cfg.seed,
       birds: cfg.birds,
+      side: Math.sin(cfg.seed * 999) > 0 ? 1 : -1,  // add this
     }));
+  }
+
+  _buildGradCache(ctx, trees, t)
+  {
+    this._trunkGrads = trees.map(tree => 
+    {
+      const tw  = tree.tw;
+      const trg = ctx.createLinearGradient(
+        tree.x - tw / 2, tree.y,
+        tree.x + tw / 2, tree.y
+      );
+      trg.addColorStop(0,   TREE_CONST.TRUNK_COLOR_OVERRIDE || t.treeBase);
+      trg.addColorStop(0.5, t.treeMid);
+      trg.addColorStop(1,   TREE_CONST.TRUNK_COLOR_OVERRIDE || t.treeBase);
+      return trg;
+    });
+
+    this._lastT = t;
   }
 
   draw(ctx, W, H, t) 
@@ -131,66 +155,42 @@ class TreeRenderer extends BaseRenderer
 
     const trees = this.getTreeData(W, H);
 
-    trees.forEach(tree => {
-      ctx.save();
+    if (this._lastT !== t) 
+    {
+      this._buildGradCache(ctx, trees, t);
+    }
 
-      // Draw order matters (back to front style layering)
-      this._drawTrunk(ctx, t, tree);
+    trees.forEach((tree, i) => 
+    {
+      ctx.save();
+      this._drawTrunk(ctx, t, tree, this._trunkGrads[i]);
       this._drawFoliage(ctx, t, tree);
       this._drawBranches(ctx, t, tree);
-
       ctx.restore();
     });
   }
 
   // ─── TRUNK ────────────────────────────────────────────────────────────────
-  _drawTrunk(ctx, t, tree) 
+  _drawTrunk(ctx, t, tree, cachedGrad) 
   {
-    const K = TREE_CONST;
+    const K  = TREE_CONST;
     const tw = tree.tw;
 
-    const trunkCol = K.TRUNK_COLOR_OVERRIDE || t.treeBase;
-    const trunkMid = t.treeMid;
-
-    const trg = ctx.createLinearGradient(
-      tree.x - tw / 2,
-      tree.y,
-      tree.x + tw / 2,
-      tree.y
-    );
-
-    trg.addColorStop(0, trunkCol);
-    trg.addColorStop(0.5, trunkMid);
-    trg.addColorStop(1, trunkCol);
-
-    ctx.fillStyle = trg;
+    ctx.fillStyle = cachedGrad;
 
     ctx.beginPath();
-
-    // Left side of trunk (bezier curve)
     ctx.moveTo(tree.x - tw * K.TRUNK_FLARE, tree.y);
     ctx.bezierCurveTo(
-      tree.x - tw,
-      tree.y - tree.h * K.TRUNK_CP1_Y,
-      tree.x - tw * K.TRUNK_TOP * 0.5,
-      tree.y - tree.h * K.TRUNK_CP2_Y,
-      tree.x - tw * K.TRUNK_TOP * 0.5,
-      tree.y - tree.h
+      tree.x - tw,           tree.y - tree.h * K.TRUNK_CP1_Y,
+      tree.x - tw * K.TRUNK_TOP * 0.5, tree.y - tree.h * K.TRUNK_CP2_Y,
+      tree.x - tw * K.TRUNK_TOP * 0.5, tree.y - tree.h
     );
-
-    // Top cap
     ctx.lineTo(tree.x + tw * K.TRUNK_TOP * 0.5, tree.y - tree.h);
-
-    // Right side (mirror curve)
     ctx.bezierCurveTo(
-      tree.x + tw * K.TRUNK_TOP * 0.5,
-      tree.y - tree.h * K.TRUNK_CP2_Y,
-      tree.x + tw,
-      tree.y - tree.h * K.TRUNK_CP1_Y,
-      tree.x + tw * K.TRUNK_FLARE,
-      tree.y
+      tree.x + tw * K.TRUNK_TOP * 0.5, tree.y - tree.h * K.TRUNK_CP2_Y,
+      tree.x + tw,           tree.y - tree.h * K.TRUNK_CP1_Y,
+      tree.x + tw * K.TRUNK_FLARE, tree.y
     );
-
     ctx.closePath();
     ctx.fill();
   }

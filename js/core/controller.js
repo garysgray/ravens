@@ -22,16 +22,16 @@ class Controller
 
     // AUDIO AUTOSTART SAFETY
     // Most browsers block audio until user interaction
-    document.addEventListener(
-      'click',
-      () => {
-        if (this.audio && !this.audio.enabled) {
-          // SceneAudio uses enable(), NOT resume()
-          this.audio.enable();
-        }
-      },
-      { once: true }
-    );
+    document.addEventListener('click',() => 
+    {
+      if (this.audio && !this.audio.enabled) 
+      {
+        // SceneAudio uses enable(), NOT resume()
+        this.audio.enable();
+      }
+    },
+    { once: true }
+);
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -39,19 +39,14 @@ class Controller
   // ─────────────────────────────────────────────────────────────
   update(dt) 
   {
-    if (this.scene && typeof this.scene.update === 'function') {
       this.scene.update(dt);
-    }
   }
-
   // ─────────────────────────────────────────────────────────────
   // GAME LOOP DRAW
   // ─────────────────────────────────────────────────────────────
-  draw() 
+  drawScene() 
   {
-    if (this.scene && typeof this.scene.draw === 'function') {
       this.scene.draw();
-    }
   }
 
   // ─────────────────────────────────────────────────────────────

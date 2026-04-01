@@ -15,6 +15,9 @@ class StarField extends BaseRenderer
 
     // Animation phase used for twinkle motion
     this.phase = 0;
+
+    this._lastStarColor = null;
+    this._parsedStar    = null;
   }
 
   // Called every frame
@@ -35,6 +38,16 @@ class StarField extends BaseRenderer
     // Base star color (can be overridden globally or by sky state)
     const starColor = K.STAR_COLOR_OVERRIDE || t.skyGlow || '#fff';
 
+    if (starColor !== this._lastStarColor)
+    {
+      const r = parseInt(starColor.slice(1,3), 16);
+      const g = parseInt(starColor.slice(3,5), 16);
+      const b = parseInt(starColor.slice(5,7), 16);
+      this._parsedStar    = { r, g, b };
+      this._lastStarColor = starColor;
+    }
+    const ps = this._parsedStar;
+
     this.stars.forEach(s => 
     {
       // Twinkle calculation:
@@ -51,7 +64,7 @@ class StarField extends BaseRenderer
       ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
 
       // Clamp alpha so it never goes negative (avoids invisible/invalid render)
-      ctx.fillStyle = this._alpha(starColor, Math.max(0, b));
+      ctx.fillStyle = `rgba(${ps.r},${ps.g},${ps.b},${Math.max(0, b)})`;
 
       ctx.fill();
     });

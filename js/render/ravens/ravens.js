@@ -116,13 +116,21 @@ class Raven extends BaseRenderer
   // Updates color palette based on current time-of-day theme
   setTime(id) 
   {
-    const t = CONFIG.time[id]; // grab theme config
-    if (!t) return; // safety guard if invalid id
-
-    this._timeId = id;
-
-    // 3-layer color system: far / mid / close
+    const t = CONFIG.time[id];
+    if (!t) return;
+    this._timeId   = id;
     this.rawColors = [t.ravenFar, t.ravenMid, t.ravenClose];
+
+    // pre-parse colors for _alpha
+    this._parsedColors = this.rawColors.map(hex => 
+    {
+      if (!hex || hex[0] !== '#') return null;
+      return {
+        r: parseInt(hex.slice(1,3), 16),
+        g: parseInt(hex.slice(3,5), 16),
+        b: parseInt(hex.slice(5,7), 16)
+      };
+    });
   }
 
   // Resets raven position, motion, and animation state
@@ -224,26 +232,23 @@ class Raven extends BaseRenderer
     ctx.rotate(RAVEN_CONFIG.flipDirectionFix ? angle + Math.PI : angle);
 
     // set color with alpha blending
-    ctx.fillStyle = this._alpha(this.rawColors[this.layer], this.alphaVal);
+    const pc = this._parsedColors?.[this.layer];
+    ctx.fillStyle = pc 
+      ? `rgba(${pc.r},${pc.g},${pc.b},${this.alphaVal})`
+      : this._alpha(this.rawColors[this.layer], this.alphaVal);
 
     // body shape
     const bodyH = s * (RAVEN_CONFIG.render.bodyHalf || 0.5);
     ctx.fillRect(-s, -bodyH, s * 2, s);
 
-    // top wing
+    // top + bottom wings in one path
     ctx.beginPath();
-    ctx.moveTo(-s, 0); 
-    ctx.lineTo(0, -s * (RAVEN_CONFIG.render.wingUpScale || 0.6) - wUp); 
+    ctx.moveTo(-s, 0);
+    ctx.lineTo(0, -s * (RAVEN_CONFIG.render.wingUpScale || 0.6) - wUp);
     ctx.lineTo(s, 0);
+    ctx.lineTo(0, s * (RAVEN_CONFIG.render.wingDownScale || 0.4) + wUp);
+    ctx.closePath();
     ctx.fill();
-
-    // bottom wing
-    ctx.beginPath();
-    ctx.moveTo(-s, 0); 
-    ctx.lineTo(0, s * (RAVEN_CONFIG.render.wingDownScale || 0.4) + wUp); 
-    ctx.lineTo(s, 0);
-    ctx.fill();
-
     ctx.restore();
   }
 }
@@ -277,12 +282,25 @@ class RavenLayer extends BaseRenderer
   }
 
   // Resize canvas to match window
-  _resize() 
+ _resize() 
   {
     if (!this.canvas) return;
-
-    this.canvas.width = window.innerWidth;
+    this.canvas.width  = window.innerWidth;
     this.canvas.height = window.innerHeight;
+    this._buildFadeGrad();
+  }
+
+  _buildFadeGrad()
+  {
+    if (!this.ctx) return;
+    const H    = this.canvas.height;
+    const fade = this.ctx.createLinearGradient(
+      0, H * RAVEN_CONFIG.fade.start,
+      0, H * RAVEN_CONFIG.fade.end
+    );
+    fade.addColorStop(0, 'transparent');
+    fade.addColorStop(1, 'rgba(0,0,0,1)');
+    this._fadeGrad = fade;
   }
 
   // Ensure correct number of ravens exist in this layer
@@ -338,25 +356,11 @@ class RavenLayer extends BaseRenderer
     this.ravens.forEach(r => r.draw(this.ctx));
 
     // ─── Foreground fade effect (only for layer 0) ───
-    if (this.layerIndex === 0) 
+    if (this.layerIndex === 0 && this._fadeGrad) 
     {
-      // Creates vertical fade mask to simulate atmospheric depth
-      const fade = this.ctx.createLinearGradient(
-        0,
-        H * RAVEN_CONFIG.fade.start,
-        0,
-        H * RAVEN_CONFIG.fade.end
-      );
-
-      fade.addColorStop(0, 'transparent');
-      fade.addColorStop(1, 'rgba(0,0,0,1)');
-
-      // Switch to erase mode for fade effect
       this.ctx.globalCompositeOperation = 'destination-out';
-      this.ctx.fillStyle = fade;
+      this.ctx.fillStyle = this._fadeGrad;
       this.ctx.fillRect(0, 0, W, H);
-
-      // Restore normal drawing mode
       this.ctx.globalCompositeOperation = 'source-over';
     }
   }

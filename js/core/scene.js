@@ -3,6 +3,8 @@ class Scene
   constructor(audio) 
   {
     this.audio = audio;
+    this.W = window.innerWidth;
+    this.H = window.innerHeight;
 
     // --- SKY SYSTEMS (BACKGROUND LAYER) ---
     this.skyBg  = new SkyBackground();
@@ -12,6 +14,7 @@ class Scene
       CLOUD_SPEED: 0.0004,
       CLOUD_STRETCH: 4.0,
       CLOUD_MIN_SZ: 0.08
+      
     });
 
     // --- ENVIRONMENT (MID LAYERS) ---
@@ -73,14 +76,13 @@ class Scene
   // ─────────────────────────────────────────────────────────────
   _resize() 
   {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-
-    // Resize all canvases safely
+    this.W = window.innerWidth;
+    this.H = window.innerHeight;
+    this.ravenSide._resize(this.W, this.H);
     [this.skyCanvas, this.sideCanvas, this.noiseCanvas].forEach(c => {
       if (c) {
-        c.width = w;
-        c.height = h;
+        c.width  = this.W;
+        c.height = this.H;
       }
     });
   }
@@ -113,8 +115,8 @@ class Scene
   draw() 
   {
     const t = CONFIG.time[this._currentTime];
-    const W = window.innerWidth;
-    const H = window.innerHeight;
+    const W = this.W;
+    const H = this.H;
 
     // =========================
     // MAIN SKY + WORLD CANVAS
@@ -181,7 +183,7 @@ class Scene
     }
 
     // STATIC NOISE OVERLAY
-    this._drawNoise();
+    //this._drawNoise();
   }
 
   // ─────────────────────────────────────────────────────────────

@@ -189,10 +189,9 @@ body {
    Adjusts the HUD for vertical portrait screens.
 */
 @media (max-width: 640px) {
-    .HUD { 
-        flex-direction: column; 
-        width: calc(100vw - 28px); 
-        gap: 8px; 
+    .HUD {
+        backdrop-filter: none;
+        background: rgba(6, 4, 3, 0.96); /* slightly more opaque to compensate */
     }
     .hud-divider { 
         width: 100%; 

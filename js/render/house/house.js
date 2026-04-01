@@ -4,15 +4,17 @@ class HouseRenderer extends BaseRenderer
   {
     super({ POS_X: 0.46, POS_Y: 0.70, SCALE: 0.4 });
 
-    // ── STATE
-    this.time = 'dawn'; // controls window brightness behavior
-    this.phase = 0;     // drives procedural animation (window glow)
+    this.time = 'dawn';
+    this.phase = 0;
 
-    // ── GLOBAL SCALE (independent stretch control)
     this.scaleX = 2.6;
     this.scaleY = 1.5;
 
-    // ── ALL SHAPE CONSTANTS (geometry control)
+    this._buffer   = null;
+    this._bufferW  = 0;
+    this._bufferH  = 0;
+    this._lastTime = null;
+
     this.C = {
       ATTIC_SCALE: 0.58,
       ATTIC_HEIGHT_SCALE: 0.38,
@@ -43,19 +45,16 @@ class HouseRenderer extends BaseRenderer
       ATTIC_WIN_X: 0.42,
       ATTIC_WIN_Y: 0.27,
 
-      // ── WINDOW GLOW ANIMATION
       GLOW_FREQUENCY: 3,
       GLOW_AMPLITUDE: 0.06,
       GLOW_BASE: 0.18,
       GLOW_MIDDAY: 0.07,
 
-      // ── GLOW SHAPE
       GLOW_RADIUS_MULT: 2.2,
       GLOW_FILL_EXPAND: 3,
       GLOW_ALPHA: 0.10,
 
-      // ── TIME SPEED
-      PHASE_SPEED: 0.0004 
+      PHASE_SPEED: 0.0004
     };
   }
 
@@ -66,33 +65,29 @@ class HouseRenderer extends BaseRenderer
 
   update(dt) 
   {
-    // drives sine wave window flicker
     this.phase += dt * this.C.PHASE_SPEED;
   }
 
-  draw(ctx, W, H, t) 
+  _buildBuffer(W, H, t) 
   {
-    if (!t) return;
+    this._buffer        = document.createElement('canvas');
+    this._buffer.width  = W;
+    this._buffer.height = H;
+    this._bufferW       = W;
+    this._bufferH       = H;
 
-    ctx.save();
+    const ctx = this._buffer.getContext('2d');
+    const d   = this.getDims(W, H);
 
-    const d = this.getDims(W, H);
-
-    // ── BASE HOUSE SIZE (with independent stretch)
     const hw = d.w * this.scaleX;
     const hh = d.w * 1.1 * this.scaleY;
-
     const hx = d.x - hw * 0.5;
-
-    // keep ground alignment stable when scaling Y
     const hy = d.y - (hh * (1.2 / 1.1));
 
-    // ─────────────────────────────────────────────
     // MAIN BODY
     ctx.fillStyle = t.houseBase;
     ctx.fillRect(hx, hy - hh, hw, hh);
 
-    // ─────────────────────────────────────────────
     // ATTIC
     const atticW = hw * this.C.ATTIC_SCALE;
     const atticH = hh * this.C.ATTIC_HEIGHT_SCALE;
@@ -101,18 +96,15 @@ class HouseRenderer extends BaseRenderer
 
     ctx.fillRect(atticX, atticY, atticW, atticH);
 
-    // ─────────────────────────────────────────────
     // ROOF
     ctx.beginPath();
     ctx.moveTo(atticX - hw * 0.03, atticY);
     ctx.lineTo(atticX + atticW * 0.5, hy - hh - hh * this.C.ROOF_PEAK_SCALE);
     ctx.lineTo(atticX + atticW + hw * 0.03, atticY);
     ctx.closePath();
-
     ctx.fillStyle = t.houseBase;
     ctx.fill();
 
-    // ─────────────────────────────────────────────
     // LEFT WING
     ctx.fillStyle = t.houseMid;
 
@@ -129,7 +121,6 @@ class HouseRenderer extends BaseRenderer
     ctx.closePath();
     ctx.fill();
 
-    // ─────────────────────────────────────────────
     // RIGHT WING
     const rwW = hw * this.C.RIGHT_WING_WIDTH;
     const rwH = hh * this.C.RIGHT_WING_HEIGHT;
@@ -144,7 +135,6 @@ class HouseRenderer extends BaseRenderer
     ctx.closePath();
     ctx.fill();
 
-    // ─────────────────────────────────────────────
     // TURRET
     const tx = hx + hw + hw * this.C.TURRET_OFFSET;
     const tw = hw * this.C.TURRET_WIDTH;
@@ -159,9 +149,35 @@ class HouseRenderer extends BaseRenderer
     ctx.lineTo(tx + tw + tw * 0.12, hy - th);
     ctx.closePath();
     ctx.fill();
+  }
 
-    // ─────────────────────────────────────────────
-    // WINDOWS
+  draw(ctx, W, H, t) 
+  {
+    if (!t) return;
+
+    if (!this._buffer || this._bufferW !== W || this._bufferH !== H || this._lastTime !== this.time) 
+    {
+      this._buildBuffer(W, H, t);
+      this._lastTime = this.time;
+    }
+
+    ctx.save();
+
+    // STAMP STATIC STRUCTURE
+    ctx.drawImage(this._buffer, 0, 0);
+
+    // RECALCULATE DIMS FOR WINDOW POSITIONS
+    const d = this.getDims(W, H);
+
+    const hw = d.w * this.scaleX;
+    const hh = d.w * 1.1 * this.scaleY;
+    const hx = d.x - hw * 0.5;
+    const hy = d.y - (hh * (1.2 / 1.1));
+
+    const atticW = hw * this.C.ATTIC_SCALE;
+    const atticX = hx + hw * 0.21;
+
+    // WINDOWS — unchanged from original
     const wins = [
       {x: hx + hw * 0.07, y: hy - hh * 0.32, w: hw * this.C.WINDOW_W1, h: hh * this.C.WINDOW_H1},
       {x: hx + hw * 0.18, y: hy - hh * 0.32, w: hw * this.C.WINDOW_W1, h: hh * this.C.WINDOW_H1},
@@ -178,7 +194,6 @@ class HouseRenderer extends BaseRenderer
 
     wins.forEach(w => 
     {
-      // ── WINDOW BRIGHTNESS (time-based)
       const bright =
         this.time === 'midday'
           ? this.C.GLOW_MIDDAY
@@ -186,7 +201,6 @@ class HouseRenderer extends BaseRenderer
             Math.sin(this.phase * this.C.GLOW_FREQUENCY + w.x) *
             this.C.GLOW_AMPLITUDE;
 
-      // ── GLOW GRADIENT
       const wg = ctx.createRadialGradient(
         w.x + w.w / 2, w.y + w.h / 2, 0,
         w.x + w.w / 2, w.y + w.h / 2, w.w * this.C.GLOW_RADIUS_MULT
@@ -204,7 +218,6 @@ class HouseRenderer extends BaseRenderer
         w.h * this.C.GLOW_FILL_EXPAND
       );
 
-      // ── WINDOW CORE
       ctx.fillStyle = this._alpha(t.skyGlow, this.C.GLOW_ALPHA);
       ctx.fillRect(w.x, w.y, w.w, w.h);
     });

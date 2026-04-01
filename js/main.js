@@ -7,29 +7,57 @@
 const FIXED_TIMESTEP = 1000 / 60; // ~16.66ms per update step (60 FPS)
 const MAX_FRAME_TIME = 250;       // Clamp large frame spikes (e.g. tab switch)
 const MAX_STEPS = 5;              // Prevent spiral of death (too many updates)
+const SAFE_START_MS  = 100;           // poll interval waiting for canvas to size
+const IDLE_TIMEOUT   = 200;           // ms delay before kicking off the loop
 
 let controller;
 let lastTime = performance.now();
 let accumulator = 0;
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
-window.addEventListener('load', () => {
-  try {
+window.addEventListener('load', () => 
+{
+  try 
+  {
     controller = new Controller();
-
     // Initial state setup
-    controller.start('sparse', 'dawn');
-
+    safeStartGame();
     requestAnimationFrame(gameLoop);
-  } catch (e) {
+  }
+  catch (e) 
+  {
     console.error('Init failed:', e);
   }
+
 });
 
+// ---- Startup ----------------------------------------------------------------
+// Polls until canvases have real dimensions before starting the loop
+function safeStartGame()
+{
+  if (!readyToStart()) { setTimeout(safeStartGame, SAFE_START_MS); return; }
+  window.requestIdleCallback
+    ? requestIdleCallback(startLoop, { timeout: IDLE_TIMEOUT })
+    : setTimeout(startLoop, IDLE_TIMEOUT);
+}
+
+// Confirms canvases exist and have been sized by the browser
+function readyToStart()
+{
+  
+}
+
+function startLoop()
+{
+  controller.start('sparse', 'dawn');
+  lastTime = performance.now();
+}
+
 // ─── MAIN LOOP ───────────────────────────────────────────────────────────────
-function gameLoop(now) 
+function gameLoop() 
 {
   // Delta time in milliseconds (no conversion to seconds)
+  const now       = performance.now();
   const frameTime = Math.min(now - lastTime, MAX_FRAME_TIME);
 
   lastTime = now;
@@ -49,7 +77,6 @@ function gameLoop(now)
   if (steps >= MAX_STEPS) accumulator = 0;
 
   // Always render once per frame
-  controller.draw();
-
+  controller.drawScene();
   requestAnimationFrame(gameLoop);
 }

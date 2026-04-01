@@ -56,24 +56,18 @@ class CircleRaven
   draw(ctx, s) 
   {
     const wing = Math.sin(this.wingPhase + this.wingPhaseOffset);
-    const wUp = wing * s * this.config.wingUp;
+    const wUp  = wing * s * this.config.wingUp;
 
     // body
-    // Using bodyWidth (s * 2) and bodyHalf (s * 0.5) from config
     ctx.fillRect(-s, -s * this.config.bodyHalf, s * this.config.bodyWidth, s);
 
-    // wing top
+    // both wings in one path
     ctx.beginPath();
     ctx.moveTo(-s, 0);
     ctx.lineTo(0, -s * this.config.wingUp - wUp);
     ctx.lineTo(s, 0);
-    ctx.fill();
-
-    // wing bottom
-    ctx.beginPath();
-    ctx.moveTo(-s, 0);
     ctx.lineTo(0, s * this.config.wingDown + wUp);
-    ctx.lineTo(s, 0);
+    ctx.closePath();
     ctx.fill();
   }
 }
